@@ -2043,6 +2043,44 @@ html[data-theme="dark"] .hero-static,
 <link rel="apple-touch-icon" href="./apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png">
+<script>
+(function(){
+  var deferred=null, btn=null, dismissed=false;
+  function isStandalone(){
+    try{ return (window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||window.navigator.standalone===true; }catch(e){ return false; }
+  }
+  var isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent)&&!window.MSStream;
+  function remove(){ if(btn&&btn.parentNode) btn.parentNode.removeChild(btn); btn=null; }
+  function build(){
+    if(btn||dismissed||isStandalone()) return;
+    btn=document.createElement('div');
+    btn.id='mf-install';
+    btn.setAttribute('style','position:fixed;left:16px;right:16px;bottom:104px;z-index:60;max-width:420px;margin:0 auto;display:flex;align-items:center;gap:10px;padding:10px 12px 10px 14px;border-radius:999px;background:linear-gradient(115deg,#8B7CFF 0%,#B48CFF 48%,#E8A8C8 100%);color:#fff;box-shadow:0 10px 26px rgba(139,124,255,.35);font-family:inherit;animation:fadeUp .4s ease both');
+    btn.innerHTML='<span style="flex:1;font-weight:700;font-size:14px;line-height:1.3">Cài MoneyFlow về màn hình chính</span>'+
+      '<button type="button" id="mf-install-go" style="border:0;border-radius:999px;padding:8px 16px;background:#fff;color:#5B4BD0;font-weight:800;font-size:14px">Cài app</button>'+
+      '<button type="button" id="mf-install-x" aria-label="Đóng" style="border:0;background:transparent;color:#fff;font-size:20px;line-height:1;padding:0 4px">×</button>';
+    document.body.appendChild(btn);
+    document.getElementById('mf-install-x').onclick=function(){ dismissed=true; remove(); };
+    document.getElementById('mf-install-go').onclick=function(){
+      if(deferred){
+        var d=deferred; deferred=null; d.prompt();
+        d.userChoice.then(function(c){ if(c&&c.outcome==='accepted') remove(); else build(); }).catch(function(){});
+        remove();
+      } else if(isIOS){
+        alert('Trên iPhone: bấm nút Chia sẻ (ô vuông có mũi tên) rồi chọn "Thêm vào MH chính".');
+      }
+    };
+  }
+  window.addEventListener('beforeinstallprompt',function(e){
+    e.preventDefault(); deferred=e;
+    if(document.body) build(); else document.addEventListener('DOMContentLoaded',build);
+  });
+  window.addEventListener('appinstalled',function(){ deferred=null; dismissed=true; remove(); });
+  if(isIOS&&!isStandalone()){
+    window.addEventListener('load',function(){ setTimeout(build,1500); });
+  }
+})();
+</script>
 </head>
 <body>
   <div id="root"></div>
